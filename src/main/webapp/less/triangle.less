@@ -1,0 +1,36 @@
+//less混合
+.triangle(L,@borderWidth:40px,@border-color:red){//L是一个自定义标识符，与@borderWidth形参作用差不多:left 右侧
+  width: 0px;
+  height: 0px;
+  border-width: @borderWidth;//40px;
+  border-style:dashed solid dashed dashed;
+  border-color: transparent @border-color transparent transparent;
+  overflow: hidden;
+}
+
+.triangle(R,@borderWidth:40px,@border-color:red){//R是一个自定义标识符，与@borderWidth形参作用差不多:right
+  width: 0px;
+  height: 0px;
+  border-width: @borderWidth;//40px;
+  border-style:dashed dashed dashed solid;
+  border-color: transparent transparent transparent @border-color;
+  overflow: hidden;
+}
+
+.triangle(T,@borderWidth:40px,@border-color:red){//T是一个自定义标识符，与@borderWidth形参作用差不多:top
+  width: 0px;
+  height: 0px;
+  border-width: @borderWidth;//40px;
+  border-style:dashed dashed solid dashed;
+  border-color: transparent transparent @border-color transparent;
+  overflow: hidden;
+}
+
+.triangle(B,@borderWidth:40px,@border-color:red){//B是一个自定义标识符，与@borderWidth形参作用差不多:bottom
+  width: 0px;
+  height: 0px;
+  border-width: @borderWidth;//40px;
+  border-style: solid dashed dashed dashed;
+  border-color: @border-color transparent transparent transparent;
+  overflow: hidden;
+}

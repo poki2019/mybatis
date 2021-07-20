@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hupeng.mybatis.dao.EmployeeMapper">
+    <cache type="org.mybatis.caches.ehcache.EhcacheCache"></cache>
+    <!--namespace：命名空间，唯一。如果有对应Mapper接口，需要写该接口的全类名。mybatis会进行自动动态绑定。
+    id:对应select、insert等操作的唯一标识，类似于Java的方法名；如果有对应Mapper接口，需要写该接口中对应的方法名。mybatis会进行自动动态绑定。
+    resultType：执行sql语句后返回值类型，可以是自定义的Java对象，比如：com.hupeng.mybatis.bean.Employee；
+    #{id}:从传递过来的参数中取出id值；需要传过来的参数名称，也可以按照顺序来，比如第一个参数#{0}；
+    -->
+   <!-- resultMap:自定义某个javaBean的封装规则；
+   id:唯一，方便其他配置语句引用；mybatis返回的结果处理后也叫这个名
+   type:自定义结果映射规则的Java类型，可以写别名
+   -->
+    <resultMap id="myemp" type="com.hupeng.mybatis.bean.Employee">
+        <!--id标签指定主键的封装策略（会用底层针对主键的优化）、result标签指定其他属性的封装策略：property指定JavaBean的对应属性，column指定数据库表的列名。
+        注意：其他没有配置映射规则的数据库列（或Java属性）mybatis会自动封装结果；
+        但是推荐的是resultMap中把所有的属性处理规则都写上。
+        -->
+        <id property="id" column="id"></id>
+        <result property="lastName" column="last_name"></result>
+        <result property="email" column="email"></result>
+    </resultMap>
+    <!-- resultMap:自定义查询结果集映射（到JavaBean）的规则；不能与resultType（mybatis自动映射结果）同时使用-->
+    <select id="getEmpById" parameterType="integer" resultMap="myemp">
+        select id,last_name lastName,email,gender  from tbl_employee where id=#{id}
+    </select>
+
+    <sql id="commonColumn">
+        select id,last_name
+        <if test="name.equals('junqi')">
+        '你好帅'
+        </if>
+        ,email,gender
+    </sql>
+    <select id="getEmpByName" resultType="com.hupeng.mybatis.bean.Employee" parameterType="string">
+        /*select id,last_name lastName,email,gender*/
+        <include refid="commonColumn"></include>
+         from tbl_employee where last_name=#{name};
+    </select>
+
+    <!-- Mapper接口： public void addEmp(Employee employee)-方法名与语句id。
+    参数类型parameterType可以省略，mybatis会自动推断；
+    #{lastName},参数，是传参employee对象的一个属性，可以直接用，也可以#{employee.lastName}这样引用-map传参且有key employee时才可；
+    -->
+    <insert id="addEmp" parameterType="com.hupeng.mybatis.bean.Employee" useGeneratedKeys="true" keyProperty="id">
+        insert into tbl_employee(last_name,email,gender)
+        values (#{lastName},#{email},#{gender});
+    </insert>
+
+   <!-- public void updateEmp(Employee employee);-->
+    <update id="updateEmp" parameterType="employee">
+        update tbl_employee set last_name=#{lastName},email=#{email},gender=#{gender} where id=#{id};
+    </update>
+
+    <!--public void deleteEmpById(Integer id);
+    id=#{0}传进来的第一个参数；也可以id=#{id},传参中必须有一个参数名叫id
+    -->
+    <delete id="deleteEmpById" parameterType="integer">
+        delete from tbl_employee where id=#{0};
+    </delete>
+
+    <select id="selectEmpsByLastNameLike" resultType="com.hupeng.mybatis.bean.Employee">
+    <!--
+    1.resultType:如果是集合，需要指定集合里面元素的类型，否则可能不会正确映射结果；
+    2.<bind name="myLastName" value="'%lastName%'"/>:
+    会被解析为%lastName%(String)，参数不能被正确解析;
+    也不能写成'%#{lastName}%'和'%'#{lastName}'%'会报错，或者查不到数据
+    -->
+        <!--<bind name="myLastName" value="'%'+lastName+'%'"/>-->
+        select * from tbl_employee where last_name like #{lastName,jdbcType=NULL}
+    </select>
+
+    <select id="getEmpByIdMap" resultType="map" parameterType="int">
+        select * from tbl_employee where id=#{id}
+    </select>
+    <!--
+      1.resultType:与上面不同的是，这里也是指定的map中value的JavaBean的类型-->
+    <select id="getEmpByLastNameLikeMap" resultType="com.hupeng.mybatis.bean.Employee">
+            select * from tbl_employee where last_name like #{lastName}
+    </select>
+
+    <resultMap id="myEmpAndDept" type="com.hupeng.mybatis.bean.Employee">
+        <id column="id" property="id"></id>
+        <result column="last_name" property="lastName"></result>
+        <result column="gender" property="gender"></result>
+        <result column="email" property="email"></result>
+        <!--e.d_id,d.id,d.dept_name把它们映射到Employee的属性dept(Depaerment类上)
+        支持属性级联：dept.id（也就是属性的属性）
+        -->
+       <!--
+       1.也可以这样写：
+       <result column="d_id" property="dept.id"></result>
+       2.不能这样写：因为resultMap内只能有一个id标签
+        <id column="did" property="dept.id"></id>
+       3.级联属性类Department内部必须声明无参构造器(用于反射)，如只有有参构造器，mybatis不能隐身该级联属性
+        -->
+        <result column="did" property="dept.id"></result>
+        <result column="dept_name" property="dept.departmentName"></result>
+    </resultMap>
+
+    <resultMap id="myEmpAndDept2" type="com.hupeng.mybatis.bean.Employee">
+        <id column="id" property="id"></id>
+        <result column="last_name" property="lastName"></result>
+        <result column="gender" property="gender"></result>
+        <result column="email" property="email"></result>
+       <!-- association可以指定级联的JavaBean对象
+       property：指定哪个属性是级联的JavaBean的对象（不是值属性的属性） private Department dept;
+       javaType:指定这个属性对象的类型，不能省略
+       -->
+        <association property="dept" javaType="com.hupeng.mybatis.bean.Department">
+        <!--这里的id标签与外部的id标签的列要加以区分，否则映射出错 -->
+        <id column="did" property="id"></id>
+        <result column="dept_name" property="departmentName"></result>
+        </association>
+
+    </resultMap>
+    <!--查询员工及其对应的部门信息:连表查询-->
+    <select id="getEmpAndDeptById" resultMap="myEmpAndDept2">
+    <!--注意e.id和d.id要进行区分，否则映射会报错，不知道哪个是主键-->
+        select e.id,e.last_name lastName,e.gender,e.email,e.d_id,d.id did,d.dept_name from tbl_employee e,tbl_department d where e.d_id=d.id and e.id=#{id}
+    </select>
+
+   <!-- 使用association定义分布查询
+   1.先查询员工信息，并的到部门id
+   2.根据员工的did查询部门
+   3.部门对象设置到员工对象中
+   -->
+    <resultMap id="myEmpAndDeptByStep" type="com.hupeng.mybatis.bean.Employee">
+        <id column="id" property="id"></id>
+        <result column="last_name" property="lastName"></result>
+        <result column="gender" property="gender"></result>
+        <result column="email" property="email"></result>
+       <!-- association定义单个级联对象的封装规则
+       select:调用其他配置的的查询方法查询对象;
+       column:指定将之前查出的员工对象的哪一列的值传给select属性对应的查询方法（传参）
+       流程：使用select属性指定的方法（传入column指定的这列参数的值）查出对象，封装给property属性标识的对象
+       -->
+        <association property="dept" select="com.hupeng.mybatis.dao.DepartmentMapper.getDeptById" column="d_id">
+        </association>
+    </resultMap>
+    <select id="getEmpByStepId" parameterType="integer" resultMap="myEmpAndDeptByStepAndDis">
+        select * from tbl_employee where id=#{id}
+    </select>
+
+    <!--resultType指定集合里面的元素类型-->
+    <select id="getEmpsByDeptId" resultType="com.hupeng.mybatis.bean.Employee">
+        select * from tbl_employee where d_id=#{did}
+    </select>
+
+    <!-- 使用结果鉴定器来根据不同的查询结果来进行结果的封装
+  -->
+    <resultMap id="myEmpAndDeptByStepAndDis" type="com.hupeng.mybatis.bean.Employee">
+        <id column="id" property="id"></id>
+        <result column="last_name" property="lastName"></result>
+        <result column="gender" property="gender"></result>
+        <result column="email" property="email"></result>
+        <!--如果员工是女性，就查询出她的部门信息；男性就不查部门信息，但是把男性的last_name赋值给email属性:
+            column:指定需要判定的列名；
+            javaType：列值对应的Java类型
+        -->
+        <discriminator javaType="string" column="gender">
+            <!--值等于0，就是女生；
+            resultType：指定封装的结果类型(这个列是哪个类型的属性) resultType、resultMap二选一
+            -->
+            <case value="0" resultType="com.hupeng.mybatis.bean.Employee">
+                <association property="dept" select="com.hupeng.mybatis.dao.DepartmentMapper.getDeptById" column="d_id">
+                </association>
+            </case>
+            <case value="1" resultType="com.hupeng.mybatis.bean.Employee">
+                <result column="last_name" property="email"></result>
+            </case>
+        </discriminator>
+    </resultMap>
+    <select id="getEmpByStepIdDis" parameterType="integer" resultMap="myEmpAndDeptByStepAndDis">
+        select * from tbl_employee where id=#{id}
+    </select>
+</mapper>

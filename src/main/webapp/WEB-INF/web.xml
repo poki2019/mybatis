@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+         version="2.5">
+  <display-name>mybatis</display-name>
+
+  <!--以下是spring配置-->
+  <!--context-param这个要放在前面，否则报错-->
+  <context-param>
+    <param-name>contextConfigLocation</param-name>
+    <param-value>classpath:applicationContext.xml</param-value>
+    <!--
+    多个配置<param-value>/WEB-INF/xfgl-servlet.xml
+      /WEB-INF/spring-task.xml</param-value>-->
+  </context-param>
+  <listener>
+    <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+  </listener>
+
+  <!--以下是springmvc配置:前端控制器，拦截所有请求并跳转前端
+  创建对应的springmvc配置文件的两种方式：
+  方式一：按照spring加载的默认策略，在与web.xml同级的目录创建一个与下面<servlet-name>中配置名称对应的
+  文件，格式是<servlet-name>配置的名称+ -servlet.xml即springmvc-servlet.xml；
+
+  方式二：
+   <servlet>
+    <servlet-name>springmvc</servlet-name>
+    <init-param>
+      <param-name>contextConfigLocation</param-name>
+      <param-value>classpath:yourname.xml</param-value>
+    </init-param>
+    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  -->
+  <servlet>
+    <servlet-name>springmvc</servlet-name>
+    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>springmvc</servlet-name>
+    <url-pattern>/</url-pattern>
+  </servlet-mapping>
+
+  <!--配置请求编码器-->
+  <filter>
+    <filter-name>characterFilter</filter-name>
+    <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+    <init-param>
+      <param-name>encoding</param-name>
+      <param-value>UTF-8</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>characterFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <!--拦截webservice请求
+  <servlet>
+    <servlet-name>CXFServlet</servlet-name>
+    <servlet-class>org.apache.cxf.transport.servlet.CXFServlet</servlet-class>
+    <load-on-startup>2</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>CXFServlet</servlet-name>
+    <url-pattern>/services/*</url-pattern>
+  </servlet-mapping>-->
+
+  <!--
+  Hibernate 允许对关联对象、属性进行延迟加载，但是必须保证延迟加载的操作限于同一个 Hibernate Session 范围之内进行。如果 Service 层返回一个启用了延迟加载功能的领域对象给 Web 层，当 Web 层访问到那些需要延迟加载的数据时，由于加载领域对象的 Hibernate Session 已经关闭，这些导致延迟加载数据的访问异常
+（eg： org.hibernate.LazyInitializationException:(LazyInitializationException.java:42)
+-failed to lazily initialize a collection of role: cn.easyjava.bean.product.ProductType.childtypes, no session or session was closed
+org.hibernate.LazyInitializationException: failed to lazily initialize a collection of role: cn.easyjava.bean.product.ProductType.childtypes, no session or session was closed）。
+
+ 把一个Hibernate Session和一次完整的请求过程对应的线程相绑定。目的是为了实现"Open Session in View"的模式。例如： 它允许在事务提交之后延迟加载显示所需要的对象。
+
+ OpenSessionInViewFilter 过滤器将 Hibernate Session 绑定到请求线程中，它将自动被 Spring 的事务管理器探测到。所以 OpenSessionInViewFilter 适用于 Service 层使用HibernateTransactionManager 或 JtaTransactionManager 进行事务管理的环境，也可以用于非事务只读的数据操作中。
+  -->
+  <filter>
+    <filter-name>openSessionInViewFilter</filter-name>
+    <filter-class>org.springframework.orm.hibernate4.support.OpenSessionInViewFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>openSessionInViewFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+  <!--
+  RequestContextListener implementsServletRequestListener
+ServletRequestListener extendsEventListener
+ServletRequestListener监听HTTP请求事件，Web服务器接收的每次请求都会通知该监听器。
+RequestContextListener将Spring容器与Web容器结合的更加密切。这是可选配置，并且与scope=”request”搭配使用.
+
+1.通过注解获取（很简单，推荐）：
+public class Hello {
+@Autowired
+HttpServletRequest request; //这里可以获取到request
+}
+java代码：
+HttpServletRequest request = ((ServletRequestAttributes)RequestContextHolder.getRequestAttributes()).getRequest();
+  -->
+  <listener>
+    <listener-class>
+      org.springframework.web.context.request.RequestContextListener
+    </listener-class>
+  </listener>
+
+</web-app>

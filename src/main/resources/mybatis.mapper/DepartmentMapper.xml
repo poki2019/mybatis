@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hupeng.mybatis.dao.DepartmentMapper">
+    <!--namespace:指定引用哪个命名空间的缓存-->
+    <cache-ref namespace="com.hupeng.mybatis.dao.EmployeeMapper"/>
+
+    <select id="getDeptById" resultType="com.hupeng.mybatis.bean.Department">
+        select id,dept_name departmentName from tbl_department where id=#{id}
+    </select>
+
+    <!--查询部门下所有员工的信息（集合）
+    public class Department {
+    private Integer id;
+    private String departmentName;
+    private List<Employee> emps;
+    }
+
+
+    -->
+    <resultMap id="getDeptEmps" type="com.hupeng.mybatis.bean.Department">
+        <id column="did" property="id"></id>
+        <result column="dept_name" property="departmentName"></result>
+        <!--定义集合类型属性的封装规则;association定义单个属性;
+        ofType:定义集合里面元素的类型
+        -->
+        <collection property="emps" ofType="com.hupeng.mybatis.bean.Employee">
+            <!--定义集合中元素的封装规则：员工Employee的对象-->
+            <id column="eid" property="id"></id>
+            <result column="last_name" property="lastName"></result>
+            <result column="email" property="email"></result>
+            <result column="gender" property="gender"></result>
+        </collection>
+
+    </resultMap>
+    <select id="getDeptByIdPlus" resultMap="getDeptEmps">
+        SELECT d.id did,d.dept_name dept_name,
+               e.id eid,e.last_name last_name,e.email email,e.gender gender
+        FROM tbl_department d
+                 LEFT JOIN tbl_employee e
+                           ON d.id=e.d_id
+        WHERE d.id=#{id}
+    </select>
+
+    <resultMap id="getDeptByStepMap" type="com.hupeng.mybatis.bean.Department">
+        <id column="did" property="id"></id>
+        <result column="dept_name" property="departmentName"></result>
+        <collection property="emps" select="com.hupeng.mybatis.dao.EmployeeMapper.getEmpsByDeptId" column="{did=id}"></collection>
+    </resultMap>
+    <select id="getDeptByStep" resultMap="getDeptByStepMap">
+        select * from tbl_department where id=#{id}
+    </select>
+
+</mapper>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hupeng.mybatis.dao.EmployeeDynamicMapper">
+    <select id="getEmpByemp" parameterType="employee" resultType="employee">
+        select * from tbl_employee
+        <!--
+        trim:截取字符串；
+        prefix:所有trim里面拼接的语句完成后在其前部添加前缀语句：比如 where + 你拼接的语句；
+        prefixOverrides:前缀覆盖，去掉整个字符串前面多余的字符；
+        suffix:所有trim里面拼接的语句完成后在其尾部添加后缀语句：比如 你拼接的语句 + limit 10；
+        suffixOverrides:后缀覆盖，去掉整个字符串后面多余的字符；
+        -->
+        <trim prefix="where" prefixOverrides="" suffix="" suffixOverrides="and">
+            <if test="id != null and id !=''">
+                id=#{id} and
+            </if>
+            <if test="lastName != null and lastName !=''">
+                 last_Name like #{lastName} and
+            </if>
+            <if test="email != null and email !=''">
+                 email like #{email} and
+            </if>
+        </trim>
+    </select>
+
+    <update id="updateEmp" parameterType="employee">
+        update tbl_employee
+        <trim prefix="set" suffixOverrides=",">
+            <if test="lastName != null and lastName !=''">
+                last_name=#{lastName},
+            </if>
+            <if test="email != null and email !=''">
+                email=#{email},
+            </if>
+        </trim>
+        where id=#{id}
+    </update>
+
+    <select id="selectForeach" parameterType="collection" resultType="employee">
+        select * from tbl_employee where id in
+        <!--
+        collection:指定要便利的参数集合名称；如果集合类型是List,mybatis会把List类型参数特殊处理放入到map中(除非你@Param("ids")自定义集合名)，map的key就是list(数组是array);
+        item：就是遍历出的集合中的一个元素（一个具体的参数），item="item_id"类似于js时定义的变量(a)-》for（a in list）供外部使用： #{item_id}
+        separator：没遍历出一个元素，用什么分割;集合最后一个参数不会加上。
+        open:遍历完成后，整个语句的头部加上的字符串
+        open:遍历完成后，整个语句的结尾处加上的字符串
+        index:遍历list的时候index就是索引；遍历map的时候index就是key,item就是map的值-》index="i";外面就引用#{i}
+        -->
+        <foreach collection="ids" item="item_id" separator="," open="(" close=")">
+            #{item_id}
+        </foreach>
+    </select>
+
+    <insert id="addEmps">
+        <foreach collection="emps" item="emp" separator=";">
+            insert into tbl_employee(last_name,email,gender,d_id) values
+            (#{emp.lastName},#{emp.email},#{emp.gender},#{emp.dept.id})
+        </foreach>
+    </insert>
+</mapper>
